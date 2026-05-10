@@ -29,15 +29,15 @@ export const ClientService = {
   // ================= USERS =================
 
   getUsers(page = 1) {
-    return api.get(`/get-users?page=${page}`);
+    return api.get(`user/get-users?page=${page}`);
   },
 
   deleteUser(userId) {
-    return api.get(`/delete-user/${userId}`);
+    return api.get(`user/delete-user/${userId}`);
   },
 
   addUser(formData) {
-    return api.post("/add-user", formData, {
+    return api.post("user/add-user", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
@@ -45,69 +45,44 @@ export const ClientService = {
   },
 
   updateUser(userId, formData) {
-    return api.post(`/update-user/${userId}`, formData, {
+    return api.post(`user/update-user/${userId}`, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
     });
-  },
-
-
-  // ================= PRODUCTS =================
-
-  getProduct() {
-    return api.get("frontend/get-product");
-  },
-
-  getProductDetail(id) {
-    return api.get(`frontend/get-product-detail/${id}`);
-  },
-
-
-  // ================= STORES =================
-
-  getStores() {
-    return api.get("frontend/get-stores");
-  },
-
-  getStoreDetail(id) {
-    return api.get(`frontend/get-stores-details/${id}`);
-  },
-
-  // ================= CATEGORY =================
-
-  getCategory() {
-    return api.get("frontend/category/get-categories");
   },
 
   // ================= ADMIN =================
 
   getVendors() {
-    return api.get("get-vendors");
+    return api.get("user/get-vendors");
   },
 
   getColorForAdmin() {
-    return api.get("get-colors-backend");
+    return api.get("product/get-colors-backend");
   },
 
   getCategoryForAdmin() {
-    return api.get("get-categories-backend");
+    return api.get("product/get-categories-backend");
   },
 
   addUpdateCategory(data) {
-    return api.post("add-update-category-backend", data, {
+    return api.post("product/add-update-category-backend", data, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
     });
   },
+  deleteProduct(id) {
+    return api.get(`product/delete-product-backend/${id}`);
+  },
 
   deleteCategory(id) {
-    return api.get(`delete-category-backend/${id}`);
+    return api.get(`product/delete-category-backend/${id}`);
   },
 
   addProductForAdmin(data) {
-    return api.post("add-product-backend", data, {
+    return api.post("product/add-product-backend", data, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
@@ -115,7 +90,7 @@ export const ClientService = {
   },
 
   getProductForAdmin() {
-    return api.get("get-product-backend");
+    return api.get("product/get-product-backend");
   },
 
   // ================= STORE ADMIN =================
@@ -134,6 +109,9 @@ export const ClientService = {
         "Content-Type": "multipart/form-data",
       },
     });
+  },
+  deleteStore(id) {
+    return api.get(`store/delete-store/${id}`);
   },
 
   getTags() {

@@ -133,7 +133,7 @@ const confirmDelete = async () => {
   if (!productToDelete.value) return;
   try {
     isLoading.value = true;
-    await ClientService.deleteProductForAdmin(productToDelete.value.id);
+    await ClientService.deleteProduct(productToDelete.value.id);
     toast.success('Product deleted successfully!');
     showDeleteModal.value = false; productToDelete.value = null; getProduct();
   } catch (e) { toast.error(e.response?.data?.message || 'Something went wrong!'); }

@@ -90,21 +90,33 @@ const loadUsers = async () => {
 };
 const submitStore = async () => {
   try {
+    if(isEdit.value)
+    {
+      loadingText.value = 'updating stores'; 
+    }else{
+      loadingText.value = 'Saving stores'; 
+    }
     isLoading.value = true;
     const fd = new FormData();
     fd.append('store_name', storeForm.value.store_name);
     fd.append('store_description', storeForm.value.store_description);
     fd.append('user_id', storeForm.value.user_id);
     fd.append('status', storeForm.value.status);
+
     storeForm.value.category_id.forEach(id => fd.append('category_id[]', id));
     storeForm.value.tag_id.forEach(id => fd.append('tag_id[]', id));
+
     if (storeForm.value.store_logo instanceof File) fd.append('store_logo', storeForm.value.store_logo);
     if (storeForm.value.store_cover_image instanceof File) fd.append('store_cover_image', storeForm.value.store_cover_image);
     if (isEdit.value) fd.append('id', storeForm.value.id);
     const res = isEdit.value
       ? await ClientService.updateStore(storeForm.value.id, fd)
       : await ClientService.addStore(fd);
-    if (res.data.success) { toast.success(res.data.message || `Store ${isEdit.value ? 'updated' : 'added'}!`); getStore(); closeModal(); }
+    if (res.data.success) { 
+       toast.success(res.data.message || `Store ${isEdit.value ? 'updated' : 'added'}!`);
+       getStore();
+       closeModal(); 
+      }
     else toast.error(res.data.error || 'Something went wrong.');
   } catch (e) { toast.error(e.response?.data?.error || 'An unexpected error occurred.'); }
   finally { isLoading.value = false; }
@@ -112,6 +124,7 @@ const submitStore = async () => {
 const confirmDelete = async () => {
   if (!storeToDelete.value) return;
   try {
+    loadingText.value = 'deleting stores'; 
     isLoading.value = true;
     await ClientService.deleteStore(storeToDelete.value.id);
     toast.success('Store deleted successfully!');
