@@ -1,29 +1,15 @@
-# lms-frontend
-
-This template should help get you started developing with Vue 3 in Vite.
-
-## Recommended IDE Setup
-
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
+# 1. Install dependencies
+cd frontend
 npm install
-```
 
-### Compile and Hot-Reload for Development
+# 2. Environment setup
+cp .env.example .env
 
-```sh
+# 3. Configure .env
+VITE_API_BASE_URL=http://localhost:8000/api
+
+# 4. Run development server
 npm run dev
-```
 
-### Compile and Minify for Production
-
-```sh
+# 5. Build for production
 npm run build
-```
