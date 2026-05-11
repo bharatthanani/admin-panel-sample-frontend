@@ -1,3 +1,96 @@
+<script setup>
+import { ref, reactive, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { useToast } from 'vue-toastification';
+import { useAuthStore } from '@/stores/auth';
+import axios from 'axios';
+import { env } from '../../config.js';
+
+const router  = useRouter();
+const toast   = useToast();
+const auth    = useAuthStore();
+
+const isLoading = ref(false);
+const showPass  = ref(false);
+const baseURL   = env.BASE_URL;
+
+const form = reactive({ email: '', password: '' });
+
+// ── Demo accounts — update emails to match your seeder ──
+const demoAccounts = [
+  {
+    role:     'admin',
+    label:    'Admin',
+    email:    'superadmin@admin.com',
+    password: '12345',
+    icon:     'bi bi-shield-fill-check',
+    bg:       '#eef0fd',
+    color:    '#6366f1',
+  },
+  {
+    role:     'vendor',
+    label:    'Vendor',
+    email:    'vendor@demo.com',
+    password: '12345',
+    icon:     'bi bi-person-badge-fill',
+    bg:       '#fffbeb',
+    color:    '#f59e0b',
+  },
+  {
+    role:     'user',
+    label:    'User',
+    email:    'user@demo.com',
+    password: '12345',
+    icon:     'bi bi-person-fill',
+    bg:       '#ecfdf5',
+    color:    '#10b981',
+  },
+];
+
+const activeDemo = computed(() =>
+  demoAccounts.find(d => d.email === form.email) || null
+);
+
+const fillDemo = (demo) => {
+  form.email    = demo.email;
+  form.password = demo.password;
+};
+
+const handleLogin = async () => {
+  isLoading.value = true;
+  try {
+    const response = await axios.post(`${baseURL}/login`, form);
+    const data = response.data;
+
+    auth.token       = data.token;
+    auth.user        = data.user;
+    auth.role        = data.user.role;
+    auth.permissions = data.user.permissions;
+
+    localStorage.setItem('admin_token', data.token);
+    localStorage.setItem('user',        JSON.stringify(data.user));
+    localStorage.setItem('role',        data.user.role);
+    localStorage.setItem('permissions', JSON.stringify(data.user.permissions));
+
+    axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
+
+    toast.success(data.message || 'Login successful!');
+    router.push('/admin/dashboard');
+
+    form.email    = '';
+    form.password = '';
+  } catch (error) {
+    toast.error(error.response?.data?.message || 'Invalid credentials!');
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+onMounted(() => {
+  if (auth.isLoggedIn) router.push('/admin/dashboard');
+});
+</script>
+
 <template>
   <div class="auth-shell">
 
@@ -140,98 +233,7 @@
   </div>
 </template>
 
-<script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { useToast } from 'vue-toastification';
-import { useAuthStore } from '@/stores/auth';
-import axios from 'axios';
-import { env } from '../../config.js';
 
-const router  = useRouter();
-const toast   = useToast();
-const auth    = useAuthStore();
-
-const isLoading = ref(false);
-const showPass  = ref(false);
-const baseURL   = env.BASE_URL;
-
-const form = reactive({ email: '', password: '' });
-
-// ── Demo accounts — update emails to match your seeder ──
-const demoAccounts = [
-  {
-    role:     'admin',
-    label:    'Admin',
-    email:    'superadmin@admin.com',
-    password: '12345',
-    icon:     'bi bi-shield-fill-check',
-    bg:       '#eef0fd',
-    color:    '#6366f1',
-  },
-  {
-    role:     'vendor',
-    label:    'Vendor',
-    email:    'vendor@demo.com',
-    password: '12345',
-    icon:     'bi bi-person-badge-fill',
-    bg:       '#fffbeb',
-    color:    '#f59e0b',
-  },
-  {
-    role:     'user',
-    label:    'User',
-    email:    'user@demo.com',
-    password: '12345',
-    icon:     'bi bi-person-fill',
-    bg:       '#ecfdf5',
-    color:    '#10b981',
-  },
-];
-
-const activeDemo = computed(() =>
-  demoAccounts.find(d => d.email === form.email) || null
-);
-
-const fillDemo = (demo) => {
-  form.email    = demo.email;
-  form.password = demo.password;
-};
-
-const handleLogin = async () => {
-  isLoading.value = true;
-  try {
-    const response = await axios.post(`${baseURL}/login`, form);
-    const data = response.data;
-
-    auth.token       = data.token;
-    auth.user        = data.user;
-    auth.role        = data.user.role;
-    auth.permissions = data.user.permissions;
-
-    localStorage.setItem('admin_token', data.token);
-    localStorage.setItem('user',        JSON.stringify(data.user));
-    localStorage.setItem('role',        data.user.role);
-    localStorage.setItem('permissions', JSON.stringify(data.user.permissions));
-
-    axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
-
-    toast.success(data.message || 'Login successful!');
-    router.push('/admin/dashboard');
-
-    form.email    = '';
-    form.password = '';
-  } catch (error) {
-    toast.error(error.response?.data?.message || 'Invalid credentials!');
-  } finally {
-    isLoading.value = false;
-  }
-};
-
-onMounted(() => {
-  if (auth.isLoggedIn) router.push('/admin/dashboard');
-});
-</script>
 
 <style scoped>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

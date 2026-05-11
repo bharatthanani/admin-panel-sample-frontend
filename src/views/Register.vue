@@ -1,3 +1,127 @@
+<script setup>
+import { ref, reactive, computed } from 'vue';
+import { useRouter } from 'vue-router';
+import { useToast } from 'vue-toastification';
+import axios from 'axios';
+import { env } from '../../config.js';
+
+const router  = useRouter();
+const toast   = useToast();
+const baseURL = env.BASE_URL;
+
+const isLoading      = ref(false);
+const showPass       = ref(false);
+const showConfirmPass = ref(false);
+const agreed         = ref(false);
+
+const form = reactive({
+  first_name: '', last_name: '', email: '',
+  password: '', confirm_password: '',
+});
+
+const errors = reactive({
+  first_name: '', last_name: '', email: '',
+  password: '', confirm_password: '',
+});
+
+const features = [
+  { title: 'Product Management', text: 'Add, edit and track all products', icon: 'bi bi-box-seam-fill', bg: '#eef0fd', color: '#6366f1' },
+  { title: 'Store Control',      text: 'Manage multiple stores easily',    icon: 'bi bi-shop',           bg: '#fffbeb', color: '#f59e0b' },
+  { title: 'Role Permissions',   text: 'Admin, vendor and user roles',     icon: 'bi bi-shield-fill',    bg: '#ecfdf5', color: '#10b981' },
+];
+
+/* ── Password strength ── */
+const passwordStrength = computed(() => {
+  const p = form.password;
+  if (!p) return { level: 0, label: '' };
+  let score = 0;
+  if (p.length >= 6)  score++;
+  if (p.length >= 10) score++;
+  if (/[A-Z]/.test(p) && /[0-9]/.test(p)) score++;
+  if (/[^A-Za-z0-9]/.test(p)) score++;
+  const labels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
+  return { level: score, label: labels[score] || 'Strong' };
+});
+const strengthClass = (i) => {
+  const l = passwordStrength.value.level;
+  if (l === 0) return '';
+  if (i > l) return '';
+  if (l === 1) return 'str-weak';
+  if (l === 2) return 'str-fair';
+  if (l === 3) return 'str-good';
+  return 'str-strong';
+};
+
+/* ── Validate ── */
+const validateForm = () => {
+  Object.keys(errors).forEach(k => errors[k] = '');
+  let ok = true;
+  if (!form.first_name.trim())  
+  { 
+    errors.first_name = 'First name is required'; ok = false; 
+  }
+
+  if (!form.last_name.trim())   
+  { 
+    errors.last_name  = 'Last name is required';  ok = false; 
+  }
+
+  if (!form.email.trim())       
+  { errors.email = 'Email is required'; ok = false; 
+
+  }
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) 
+  { 
+    errors.email = 'Invalid email'; ok = false; 
+  }
+  if (!form.password)           
+  { 
+    errors.password = 'Password is required'; ok = false; 
+  }
+  else if (form.password.length < 6) 
+  { 
+    errors.password = 'Min. 6 characters'; ok = false; 
+  }
+  if (!form.confirm_password)   
+  { 
+    errors.confirm_password = 'Please confirm password'; ok = false; 
+  }
+  else if (form.password !== form.confirm_password) 
+  { 
+    errors.confirm_password = 'Passwords do not match'; ok = false; 
+  }
+  return ok;
+};
+
+const resetForm = () => {
+  Object.assign(form, { first_name:'', last_name:'', email:'', password:'', confirm_password:'' });
+  Object.keys(errors).forEach(k => errors[k] = '');
+  agreed.value = false;
+};
+
+/* ── Submit ── */
+const handleSubmit = async () => {
+  if (!validateForm()) { toast.error('Please fix the errors below'); return; }
+  isLoading.value = true;
+  try {
+    const res = await axios.post(`${baseURL}/create-account`, { ...form });
+    toast.success(res.data.message || 'Account created successfully!');
+    resetForm();
+    router.push('/login');
+  } catch (error) {
+    if (error.response?.status === 422) {
+      const errs = error.response.data.errors;
+      Object.keys(errs).forEach(k => { if (errors[k] !== undefined) errors[k] = errs[k][0]; });
+      toast.error('Please fix the validation errors');
+    } else {
+      toast.error(error.response?.data?.message || 'Something went wrong!');
+    }
+  } finally {
+    isLoading.value = false;
+  }
+};
+</script>
+
 <template>
   <div class="auth-shell">
 
@@ -163,103 +287,6 @@
   </div>
 </template>
 
-<script setup>
-import { ref, reactive, computed } from 'vue';
-import { useRouter } from 'vue-router';
-import { useToast } from 'vue-toastification';
-import axios from 'axios';
-import { env } from '../../config.js';
-
-const router  = useRouter();
-const toast   = useToast();
-const baseURL = env.BASE_URL;
-
-const isLoading      = ref(false);
-const showPass       = ref(false);
-const showConfirmPass = ref(false);
-const agreed         = ref(false);
-
-const form = reactive({
-  first_name: '', last_name: '', email: '',
-  password: '', confirm_password: '',
-});
-
-const errors = reactive({
-  first_name: '', last_name: '', email: '',
-  password: '', confirm_password: '',
-});
-
-const features = [
-  { title: 'Product Management', text: 'Add, edit and track all products', icon: 'bi bi-box-seam-fill', bg: '#eef0fd', color: '#6366f1' },
-  { title: 'Store Control',      text: 'Manage multiple stores easily',    icon: 'bi bi-shop',           bg: '#fffbeb', color: '#f59e0b' },
-  { title: 'Role Permissions',   text: 'Admin, vendor and user roles',     icon: 'bi bi-shield-fill',    bg: '#ecfdf5', color: '#10b981' },
-];
-
-/* ── Password strength ── */
-const passwordStrength = computed(() => {
-  const p = form.password;
-  if (!p) return { level: 0, label: '' };
-  let score = 0;
-  if (p.length >= 6)  score++;
-  if (p.length >= 10) score++;
-  if (/[A-Z]/.test(p) && /[0-9]/.test(p)) score++;
-  if (/[^A-Za-z0-9]/.test(p)) score++;
-  const labels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
-  return { level: score, label: labels[score] || 'Strong' };
-});
-const strengthClass = (i) => {
-  const l = passwordStrength.value.level;
-  if (l === 0) return '';
-  if (i > l) return '';
-  if (l === 1) return 'str-weak';
-  if (l === 2) return 'str-fair';
-  if (l === 3) return 'str-good';
-  return 'str-strong';
-};
-
-/* ── Validate ── */
-const validateForm = () => {
-  Object.keys(errors).forEach(k => errors[k] = '');
-  let ok = true;
-  if (!form.first_name.trim())  { errors.first_name = 'First name is required'; ok = false; }
-  if (!form.last_name.trim())   { errors.last_name  = 'Last name is required';  ok = false; }
-  if (!form.email.trim())       { errors.email = 'Email is required'; ok = false; }
-  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) { errors.email = 'Invalid email'; ok = false; }
-  if (!form.password)           { errors.password = 'Password is required'; ok = false; }
-  else if (form.password.length < 6) { errors.password = 'Min. 6 characters'; ok = false; }
-  if (!form.confirm_password)   { errors.confirm_password = 'Please confirm password'; ok = false; }
-  else if (form.password !== form.confirm_password) { errors.confirm_password = 'Passwords do not match'; ok = false; }
-  return ok;
-};
-
-const resetForm = () => {
-  Object.assign(form, { first_name:'', last_name:'', email:'', password:'', confirm_password:'' });
-  Object.keys(errors).forEach(k => errors[k] = '');
-  agreed.value = false;
-};
-
-/* ── Submit ── */
-const handleSubmit = async () => {
-  if (!validateForm()) { toast.error('Please fix the errors below'); return; }
-  isLoading.value = true;
-  try {
-    const res = await axios.post(`${baseURL}/create-account`, { ...form });
-    toast.success(res.data.message || 'Account created successfully!');
-    resetForm();
-    router.push('/login');
-  } catch (error) {
-    if (error.response?.status === 422) {
-      const errs = error.response.data.errors;
-      Object.keys(errs).forEach(k => { if (errors[k] !== undefined) errors[k] = errs[k][0]; });
-      toast.error('Please fix the validation errors');
-    } else {
-      toast.error(error.response?.data?.message || 'Something went wrong!');
-    }
-  } finally {
-    isLoading.value = false;
-  }
-};
-</script>
 
 <style scoped>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
